@@ -23,11 +23,26 @@ def MAPE(pred, true):
 def MSPE(pred, true):
     return np.mean(np.square((pred - true) / true))
 
+
+def RMSLE(pred, true):
+    """
+    计算 RMSLE（均方对数误差）：
+    RMSLE = sqrt( mean( (log(1 + y_pred) - log(1 + y_true))^2 ) )
+
+    参数:
+        pred: 预测值数组
+        true: 真实值数组
+    返回:
+        RMSLE 值
+    """
+    return np.sqrt(np.mean((np.log1p(pred) - np.log1p(true)) ** 2))
+
 def metric(pred, true):
     mae = MAE(pred, true)
     mse = MSE(pred, true)
     rmse = RMSE(pred, true)
     mape = MAPE(pred, true)
     mspe = MSPE(pred, true)
+    rmsle = RMSLE(pred, true)
     
     return mae,mse,rmse,mape,mspe

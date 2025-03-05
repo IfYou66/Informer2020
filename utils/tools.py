@@ -63,14 +63,33 @@ class StandardScaler():
         self.std = data.std(0)
 
     def transform(self, data):
-        mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
-        std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
-        return (data - mean) / std
+        # mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
+        # std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
+        # return (data - mean) / std
+        eps = 1e-5  # 防止除0的小常数
+        if torch.is_tensor(data):
+            mean = torch.from_numpy(self.mean).type_as(data).to(data.device)
+            std = torch.from_numpy(self.std).type_as(data).to(data.device)
+        else:
+            mean = self.mean
+            std = self.std
+        return (data - mean) / (std + eps)
 
     def inverse_transform(self, data):
-        mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
-        std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
+        # mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
+        # std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
+        # if data.shape[-1] != mean.shape[-1]:
+        #     mean = mean[-1:]
+        #     std = std[-1:]
+        # return (data * std) + mean
+        eps = 1e-5
+        if torch.is_tensor(data):
+            mean = torch.from_numpy(self.mean).type_as(data).to(data.device)
+            std = torch.from_numpy(self.std).type_as(data).to(data.device)
+        else:
+            mean = self.mean
+            std = self.std
         if data.shape[-1] != mean.shape[-1]:
             mean = mean[-1:]
             std = std[-1:]
-        return (data * std) + mean
+        return (data * (std + eps)) + mean
