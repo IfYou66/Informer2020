@@ -1,3 +1,5 @@
+import pandas as pd
+
 from data.competitionDataloader import Dataset_Favorita
 from data.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_Pred
 from exp.exp_basic import Exp_Basic
@@ -229,33 +231,75 @@ class Exp_Informer(Exp_Basic):
 
         return
 
+    # def predict(self, setting, load=False):
+    #     pred_data, pred_loader = self._get_data(flag='pred')
+    #
+    #     if load:
+    #         path = os.path.join(self.args.checkpoints, setting)
+    #         best_model_path = path+'/'+'checkpoint.pth'
+    #         self.model.load_state_dict(torch.load(best_model_path))
+    #
+    #     self.model.eval()
+    #
+    #     preds = []
+    #
+    #     for i, (batch_x,batch_y,batch_x_mark,batch_y_mark) in enumerate(pred_loader):
+    #         pred, true = self._process_one_batch(
+    #             pred_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
+    #         preds.append(pred.detach().cpu().numpy())
+    #
+    #     preds = np.array(preds)
+    #     preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+    #
+    #     # result save
+    #     folder_path = './results/' + setting +'/'
+    #     if not os.path.exists(folder_path):
+    #         os.makedirs(folder_path)
+    #
+    #     np.save(folder_path+'real_prediction.npy', preds)
+    #
+    #     return
     def predict(self, setting, load=False):
         pred_data, pred_loader = self._get_data(flag='pred')
-        
+
         if load:
             path = os.path.join(self.args.checkpoints, setting)
-            best_model_path = path+'/'+'checkpoint.pth'
+            best_model_path = os.path.join(path, 'checkpoint.pth')
             self.model.load_state_dict(torch.load(best_model_path))
 
         self.model.eval()
-        
+
         preds = []
-        
-        for i, (batch_x,batch_y,batch_x_mark,batch_y_mark) in enumerate(pred_loader):
+
+        for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pred_loader):
             pred, true = self._process_one_batch(
                 pred_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
             preds.append(pred.detach().cpu().numpy())
 
         preds = np.array(preds)
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        
-        # result save
-        folder_path = './results/' + setting +'/'
+
+        # 假设预测输出 shape 为 [num_samples, pred_len, c_out]，此处选取每个样本预测序列的第一个时刻的预测值
+        final_preds = preds[:, 0, 0]  # shape: (num_samples,)
+
+        # 读取测试集文件，获取 id 列
+        test_file = os.path.join(self.args.root_path, 'test_preprocessed.csv')
+        test_df = pd.read_csv(test_file)
+
+        # 构造提交文件，注意提交格式要求每个 id 对应一个预测值
+        submission = pd.DataFrame({
+            "id": test_df["id"],
+            "sales": final_preds
+        })
+
+        # 保存提交文件到指定文件夹
+        folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        
-        np.save(folder_path+'real_prediction.npy', preds)
-        
+
+        submission.to_csv(os.path.join(folder_path, 'submission.csv'), index=False)
+        print("Submission file has been saved.")
+
         return
 
     def _process_one_batch(self, dataset_object, batch_x, batch_y, batch_x_mark, batch_y_mark):

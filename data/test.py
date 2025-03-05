@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 
 # 指定数据目录和 CSV 文件（此处使用预处理后保存的 train.csv）
 root_path = './favourite'
-data_path = 'train.csv'
+data_path = 'train_preprocessed.csv'
 
 # 初始化数据集
 dataset = Dataset_Favorita(root_path=root_path, flag='train', size=[30, 15, 15],
